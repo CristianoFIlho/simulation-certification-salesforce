@@ -476,6 +476,116 @@ body {
   transform: scale(1.02);
 }
 
+/* Header Navigation Styles */
+.nav-link {
+  text-decoration: none;
+  color: #495057;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  background: #f8f9fa;
+  color: #667eea;
+  text-decoration: none;
+}
+
+.nav-link.home-link:hover {
+  color: #667eea;
+}
+
+.dropdown-button {
+  background: none;
+  border: none;
+  color: #495057;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dropdown-button:hover {
+  background: #f8f9fa;
+  color: #667eea;
+}
+
+.dropdown-button.mulesoft:hover {
+  color: #20c997;
+}
+
+.dropdown-item-custom {
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 2px 0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dropdown-item-custom:hover {
+  background: #f8f9fa;
+  color: #667eea;
+  text-decoration: none;
+}
+
+/* Homepage Card Styles */
+.certification-card {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+}
+
+.certification-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+}
+
+.cta-button {
+  display: block;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  transition: all 0.3s ease;
+}
+
+.cta-button.admin {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.cta-button.mulesoft {
+  background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+  color: white;
+}
+
+.cta-button.admin:hover {
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.cta-button.mulesoft:hover {
+  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.4);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .quiz-container {

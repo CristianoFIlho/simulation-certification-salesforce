@@ -57,22 +57,7 @@ export default function Home() {
         }}>
           
           {/* Administrator Card */}
-          <div className="certification-card" style={{
-            background: 'white',
-            borderRadius: '20px',
-            padding: '30px',
-            boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
-            transition: 'all 0.3s ease',
-            border: '1px solid #e9ecef'
-          }} 
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-10px)';
-            e.currentTarget.style.boxShadow = '0 25px 50px rgba(0,0,0,0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 15px 35px rgba(0,0,0,0.1)';
-          }}>
+          <div className="certification-card">
             <div style={{ textAlign: 'center', marginBottom: '25px' }}>
               <div style={{ 
                 fontSize: '4em', 
@@ -141,48 +126,14 @@ export default function Home() {
             
             <Link 
               href="/administrator/objectives1-2"
-              style={{
-                display: 'block',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                padding: '15px 25px',
-                borderRadius: '12px',
-                textDecoration: 'none',
-                textAlign: 'center',
-                fontWeight: 'bold',
-                fontSize: '1.1em',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className="cta-button admin"
             >
               🚀 Começar Simulado
             </Link>
           </div>
 
           {/* MuleSoft Card */}
-          <div className="certification-card" style={{
-            background: 'white',
-            borderRadius: '20px',
-            padding: '30px',
-            boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
-            transition: 'all 0.3s ease',
-            border: '1px solid #e9ecef'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-10px)';
-            e.currentTarget.style.boxShadow = '0 25px 50px rgba(0,0,0,0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 15px 35px rgba(0,0,0,0.1)';
-          }}>
+          <div className="certification-card">
             <div style={{ textAlign: 'center', marginBottom: '25px' }}>
               <div style={{ 
                 fontSize: '4em', 
@@ -251,26 +202,7 @@ export default function Home() {
             
             <Link 
               href="/mulesoft/mcd-level-1"
-              style={{
-                display: 'block',
-                background: 'linear-gradient(135deg, #20c997 0%, #28a745 100%)',
-                color: 'white',
-                padding: '15px 25px',
-                borderRadius: '12px',
-                textDecoration: 'none',
-                textAlign: 'center',
-                fontWeight: 'bold',
-                fontSize: '1.1em',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(32, 201, 151, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className="cta-button mulesoft"
             >
               🚀 Começar Simulado
             </Link>

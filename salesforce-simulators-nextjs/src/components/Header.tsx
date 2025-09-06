@@ -58,21 +58,11 @@ const Header = () => {
             
             <Link 
               href="/" 
+              className="nav-link home-link"
               style={{
-                textDecoration: 'none',
-                color: '#495057',
-                fontWeight: '600',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#f8f9fa';
-                e.currentTarget.style.color = '#667eea';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#495057';
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}
             >
               🏠 Home
@@ -81,28 +71,8 @@ const Header = () => {
             {/* Administrator Dropdown */}
             <div className="dropdown">
               <button
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#495057',
-                  fontWeight: '600',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
+                className="dropdown-button"
                 data-bs-toggle="dropdown"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f8f9fa';
-                  e.currentTarget.style.color = '#667eea';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#495057';
-                }}
               >
                 👨‍💼 Administrator ▼
               </button>
@@ -115,17 +85,8 @@ const Header = () => {
               }}>
                 <li>
                   <Link 
-                    className="dropdown-item" 
+                    className="dropdown-item dropdown-item-custom" 
                     href="/administrator/objectives1-2"
-                    style={{
-                      borderRadius: '8px',
-                      padding: '12px 16px',
-                      margin: '2px 0',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
                   >
                     <span style={{ color: '#28a745' }}>✓</span>
                     Configuration and Setup (1-2)
@@ -133,17 +94,8 @@ const Header = () => {
                 </li>
                 <li>
                   <Link 
-                    className="dropdown-item" 
+                    className="dropdown-item dropdown-item-custom" 
                     href="/administrator/objectives3-4"
-                    style={{
-                      borderRadius: '8px',
-                      padding: '12px 16px',
-                      margin: '2px 0',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
                   >
                     <span style={{ color: '#ffc107' }}>⏳</span>
                     Configuration and Setup (3-4)
@@ -151,17 +103,8 @@ const Header = () => {
                 </li>
                 <li>
                   <Link 
-                    className="dropdown-item" 
+                    className="dropdown-item dropdown-item-custom" 
                     href="/administrator/objectives5-6"
-                    style={{
-                      borderRadius: '8px',
-                      padding: '12px 16px',
-                      margin: '2px 0',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
                   >
                     <span style={{ color: '#ffc107' }}>⏳</span>
                     Configuration and Setup (5-6)
@@ -173,28 +116,8 @@ const Header = () => {
             {/* MuleSoft Dropdown */}
             <div className="dropdown">
               <button
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#495057',
-                  fontWeight: '600',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
+                className="dropdown-button mulesoft"
                 data-bs-toggle="dropdown"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f8f9fa';
-                  e.currentTarget.style.color = '#20c997';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#495057';
-                }}
               >
                 🔧 MuleSoft ▼
               </button>
@@ -207,17 +130,8 @@ const Header = () => {
               }}>
                 <li>
                   <Link 
-                    className="dropdown-item" 
+                    className="dropdown-item dropdown-item-custom" 
                     href="/mulesoft/mcd-level-1"
-                    style={{
-                      borderRadius: '8px',
-                      padding: '12px 16px',
-                      margin: '2px 0',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
                   >
                     <span style={{ color: '#ffc107' }}>⏳</span>
                     MCD - LEVEL 1
@@ -225,17 +139,8 @@ const Header = () => {
                 </li>
                 <li>
                   <Link 
-                    className="dropdown-item" 
+                    className="dropdown-item dropdown-item-custom" 
                     href="/mulesoft/mcd-level-2"
-                    style={{
-                      borderRadius: '8px',
-                      padding: '12px 16px',
-                      margin: '2px 0',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
                   >
                     <span style={{ color: '#ffc107' }}>⏳</span>
                     MCD - LEVEL 2
@@ -243,17 +148,8 @@ const Header = () => {
                 </li>
                 <li>
                   <Link 
-                    className="dropdown-item" 
+                    className="dropdown-item dropdown-item-custom" 
                     href="/mulesoft/mcpa-level-1"
-                    style={{
-                      borderRadius: '8px',
-                      padding: '12px 16px',
-                      margin: '2px 0',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px'
-                    }}
                   >
                     <span style={{ color: '#ffc107' }}>⏳</span>
                     MCPA - LEVEL 1
