@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Question } from "@/types/quiz";
+import { Question, ReferenceLink, VideoResource } from "@/types/quiz";
+import { QuestionAnalytics } from "@/utils/question-analytics";
 import Image from "next/image";
 
 interface QuizComponentProps {
@@ -9,25 +10,29 @@ interface QuizComponentProps {
   title: string;
 }
 
-// Toast notification function
+// Toast notification function with enhanced styling
 const showToast = (message: string, type: "success" | "error" | "warning" | "info" = "info") => {
+  // Remove existing toasts
+  const existingToasts = document.querySelectorAll('.toast');
+  existingToasts.forEach(toast => toast.remove());
+
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   
   const getToastIcon = (type: string) => {
     const icons = {
-      success: '✓',
-      error: '✗',
-      warning: '⚠',
-      info: 'ℹ'
+      success: '✅',
+      error: '❌',
+      warning: '⚠️',
+      info: 'ℹ️'
     };
     return icons[type as keyof typeof icons] || icons.info;
   };
   
   toast.innerHTML = `
     <div class="toast-content">
-      <span style="font-weight: bold; font-size: 1.2em;">${getToastIcon(type)}</span>
-      <span>${message}</span>
+      <span class="toast-icon">${getToastIcon(type)}</span>
+      <span class="toast-message">${message}</span>
     </div>
     <button class="toast-close">&times;</button>
   `;
@@ -38,19 +43,20 @@ const showToast = (message: string, type: "success" | "error" | "warning" | "inf
   setTimeout(() => toast.classList.add('show'), 100);
   
   // Auto remove
-  setTimeout(() => {
+  const autoRemoveTimer = setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => {
       if (document.body.contains(toast)) {
         document.body.removeChild(toast);
       }
     }, 300);
-  }, 3000);
+  }, 4000);
   
   // Manual close
   const closeBtn = toast.querySelector('.toast-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {
+      clearTimeout(autoRemoveTimer);
       toast.classList.remove('show');
       setTimeout(() => {
         if (document.body.contains(toast)) {
@@ -68,24 +74,73 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [randomMode, setRandomMode] = useState(false);
+  const [showHints, setShowHints] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [timerActive, setTimerActive] = useState(false);
+
+  // Timer effect
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (timerActive && timeRemaining && timeRemaining > 0) {
+      timer = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev === null || prev <= 1) {
+            setTimerActive(false);
+            showToast("Tempo esgotado! A resposta será verificada automaticamente.", "warning");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [timerActive, timeRemaining]);
 
   useEffect(() => {
+    // Validate questions on load
+    const report = QuestionAnalytics.generateReport(questions);
+    console.log('📊 Question Analysis Report:', report);
+    
+    if (report.recommendations.length > 0) {
+      console.warn('⚠️ Recommendations:', report.recommendations);
+    }
+
     // Ask user about random mode
-    const result = window.confirm("Do you want random questions and answers?");
+    const result = window.confirm("Deseja questões e respostas aleatórias?");
     setRandomMode(result);
     
     if (result) {
       // Shuffle questions and their options
       const shuffled = [...questions].sort(() => 0.5 - Math.random());
-      const shuffledWithOptions = shuffled.map(question => ({
-        ...question,
-        options: [...question.options].sort(() => 0.5 - Math.random())
-      }));
+      const shuffledWithOptions = shuffled.map(question => {
+        const optionIndices = Array.from({ length: question.options.length }, (_, i) => i);
+        const shuffledIndices = optionIndices.sort(() => 0.5 - Math.random());
+        
+        // Create mapping for correct answers
+        let newCorrectAnswer;
+        if (Array.isArray(question.correctAnswer)) {
+          newCorrectAnswer = question.correctAnswer.map(oldIndex => 
+            shuffledIndices.indexOf(oldIndex)
+          );
+        } else {
+          newCorrectAnswer = shuffledIndices.indexOf(question.correctAnswer);
+        }
+        
+        return {
+          ...question,
+          options: shuffledIndices.map(i => question.options[i]),
+          correctAnswer: newCorrectAnswer
+        };
+      });
       setShuffledQuestions(shuffledWithOptions);
-      showToast("You have chosen random questions and answers!", "info");
+      showToast("Modo aleatório ativado! 🎲", "info");
     } else {
       setShuffledQuestions(questions);
-      showToast("You have chosen non-random questions and answers!", "info");
+      showToast("Modo sequencial ativado! 📚", "info");
     }
   }, [questions]);
 
@@ -98,9 +153,23 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
   }, [title]);
 
   useEffect(() => {
-    // Save progress
+    // Save progress and reset question state
     localStorage.setItem(`quiz-progress-${title}`, currentQuestionIndex.toString());
-  }, [currentQuestionIndex, title]);
+    setSelectedAnswers([]);
+    setShowJustification(false);
+    setIsCorrect(false);
+    setShowHints(false);
+    
+    // Set up timer for current question
+    const currentQuestion = shuffledQuestions[currentQuestionIndex];
+    if (currentQuestion?.timeLimit) {
+      setTimeRemaining(currentQuestion.timeLimit);
+      setTimerActive(true);
+    } else {
+      setTimeRemaining(null);
+      setTimerActive(false);
+    }
+  }, [currentQuestionIndex, title, shuffledQuestions]);
 
   const currentQuestion = shuffledQuestions[currentQuestionIndex];
 
@@ -124,6 +193,9 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
       return;
     }
 
+    // Stop timer
+    setTimerActive(false);
+
     let correct = false;
     
     if (currentQuestion.type === "radio") {
@@ -139,29 +211,127 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
     setIsCorrect(correct);
     setShowJustification(true);
     
-    showToast(correct ? "Resposta correta!" : "Resposta incorreta", correct ? "success" : "error");
+    // Save answer to progress
+    const progress = JSON.parse(localStorage.getItem(`quiz-answers-${title}`) || '{}');
+    progress[currentQuestion.id || `q-${currentQuestionIndex}`] = {
+      selectedAnswers,
+      correct,
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem(`quiz-answers-${title}`, JSON.stringify(progress));
+    
+    const points = currentQuestion.points || 10;
+    const timeBonus = timeRemaining ? Math.floor(timeRemaining / 10) : 0;
+    const totalPoints = correct ? points + timeBonus : 0;
+    
+    showToast(
+      correct 
+        ? `Resposta correta! +${totalPoints} pontos ${timeBonus > 0 ? `(+${timeBonus} bônus tempo)` : ''} 🎉` 
+        : "Resposta incorreta 😔", 
+      correct ? "success" : "error"
+    );
   };
 
   const nextQuestion = () => {
     if (currentQuestionIndex < shuffledQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedAnswers([]);
-      setShowJustification(false);
-      setIsCorrect(false);
     } else {
-      showToast("Você respondeu todas as perguntas!", "success");
+      // Quiz completed - show final statistics
+      const progress = JSON.parse(localStorage.getItem(`quiz-answers-${title}`) || '{}');
+      const totalAnswered = Object.keys(progress).length;
+      const correctAnswers = Object.values(progress).filter((p: { correct: boolean }) => p.correct).length;
+      const percentage = Math.round((correctAnswers / totalAnswered) * 100);
+      
+      showToast(`Quiz concluído! ${correctAnswers}/${totalAnswered} corretas (${percentage}%) 🎊`, "success");
     }
   };
 
   const previousQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
-      setSelectedAnswers([]);
-      setShowJustification(false);
-      setIsCorrect(false);
     } else {
       showToast("Esta é a primeira pergunta!", "info");
     }
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const renderReferenceLinks = (links: ReferenceLink[]) => {
+    if (!links || links.length === 0) return null;
+
+    const getLinkIcon = (type: string) => {
+      const icons = {
+        documentation: '📖',
+        trailhead: '🌟',
+        article: '📄',
+        video: '🎥'
+      };
+      return icons[type as keyof typeof icons] || '🔗';
+    };
+
+    return (
+      <div className="references-section">
+        <h4>🔗 Links de Referência:</h4>
+        <div className="reference-links">
+          {links.map((link, index) => (
+            <a 
+              key={index}
+              href={link.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className={`reference-link ${link.type}`}
+            >
+              <div className="link-icon">{getLinkIcon(link.type)}</div>
+              <div className="link-content">
+                <div className="link-title">{link.title}</div>
+                <div className="link-type">{link.type}</div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderVideos = (videos: VideoResource[]) => {
+    if (!videos || videos.length === 0) return null;
+
+    return (
+      <div className="videos-section">
+        <h4>🎥 Vídeos Relacionados:</h4>
+        <div className="video-links">
+          {videos.map((video, index) => (
+            <a 
+              key={index}
+              href={video.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="video-link"
+            >
+              {video.thumbnail && (
+                <Image
+                  src={video.thumbnail}
+                  alt={video.title}
+                  width={120}
+                  height={80}
+                  className="video-thumbnail"
+                />
+              )}
+              <div className="video-info">
+                <div className="video-title">{video.title}</div>
+                {video.duration && (
+                  <div className="video-duration">⏱️ {video.duration}</div>
+                )}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   if (shuffledQuestions.length === 0) {
@@ -179,20 +349,48 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
 
   return (
     <div className="quiz-container">
-      <div className="text-center mt-5">
-        <h1 style={{ color: '#495057', marginBottom: '30px' }}>{title}</h1>
+      <div className="text-center mt-4">
+        <h1 style={{ 
+          color: '#495057', 
+          marginBottom: '30px',
+          fontSize: '2.5em',
+          fontWeight: 'bold'
+        }}>
+          {title}
+        </h1>
+        {randomMode && (
+          <div style={{ 
+            color: '#6c757d', 
+            marginBottom: '20px',
+            fontSize: '1.1em'
+          }}>
+            🎲 Modo Aleatório Ativo
+          </div>
+        )}
       </div>
       
-      {/* Progress Bar */}
+      {/* Enhanced Progress Bar */}
       <div className="navigation-container">
-        <div className="progress-bar">
-          <div 
-            className="progress-fill" 
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-          <span className="progress-text">
-            {currentQuestionIndex + 1} de {shuffledQuestions.length}
-          </span>
+        <div className="progress-section">
+          <div className="progress-info">
+            <span className="progress-text">
+              Questão {currentQuestionIndex + 1} de {shuffledQuestions.length}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {timeRemaining !== null && (
+                <span className={`timer ${timeRemaining <= 30 ? 'timer-warning' : ''}`}>
+                  ⏱️ {formatTime(timeRemaining)}
+                </span>
+              )}
+              <span className="progress-percentage">{Math.round(progressPercentage)}%</span>
+            </div>
+          </div>
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
         </div>
         
         <div className="navigation-buttons">
@@ -208,11 +406,12 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
           <button 
             className="nav-btn check-answer" 
             onClick={checkAnswer}
+            disabled={selectedAnswers.length === 0 || showJustification}
           >
-            ✓ Verificar Resposta
+            {showJustification ? '✓ Verificado' : '🔍 Verificar Resposta'}
           </button>
           
-          {currentQuestionIndex < shuffledQuestions.length - 1 && showJustification && (
+          {showJustification && currentQuestionIndex < shuffledQuestions.length - 1 && (
             <button 
               className="nav-btn primary" 
               onClick={nextQuestion}
@@ -220,18 +419,66 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
               Próximo →
             </button>
           )}
+          
+          {showJustification && currentQuestionIndex === shuffledQuestions.length - 1 && (
+            <button 
+              className="nav-btn success" 
+              onClick={() => showToast("Quiz concluído! 🎉", "success")}
+            >
+              🏁 Finalizar
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Question Card */}
+      {/* Enhanced Question Card */}
       <div className="question-card">
-        <div className="question-number">
-          Questão {currentQuestionIndex + 1}
+        <div className="question-header">
+          <div className="question-meta">
+            <span className="question-number">#{currentQuestion.id || `Q${currentQuestionIndex + 1}`}</span>
+            {currentQuestion.difficulty && (
+              <span className={`difficulty-badge ${currentQuestion.difficulty}`}>
+                {currentQuestion.difficulty.toUpperCase()}
+              </span>
+            )}
+            {currentQuestion.category && (
+              <span className="category-badge">{currentQuestion.category}</span>
+            )}
+            {currentQuestion.points && (
+              <span className="points-badge">+{currentQuestion.points} pts</span>
+            )}
+          </div>
+          <div className="question-type-badge">
+            {currentQuestion.type === 'radio' ? '🔘 Única Escolha' : '☑️ Múltipla Escolha'}
+          </div>
         </div>
         
         <div className="question-text">
           {currentQuestion.question}
         </div>
+
+        {/* Screenshots */}
+        {currentQuestion.screenshots && currentQuestion.screenshots.length > 0 && (
+          <div className="screenshots-container">
+            {currentQuestion.screenshots.map((screenshot, index) => (
+              <Image
+                key={index}
+                src={screenshot}
+                alt={`Question illustration ${index + 1}`}
+                width={600}
+                height={400}
+                className="screenshot"
+                style={{ 
+                  maxWidth: '100%', 
+                  height: 'auto',
+                  borderRadius: '12px',
+                  margin: '15px 0',
+                  boxShadow: '0 5px 15px rgba(0,0,0,0.1)'
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         <div className="options-container">
           {currentQuestion.options.map((option, index) => {
@@ -242,7 +489,7 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
                 : currentQuestion.correctAnswer === index);
             const isIncorrectSelected = showJustification && isSelected && !isCorrectOption;
             
-            let optionClass = "option-item";
+            let optionClass = "option-item enhanced";
             if (isSelected) optionClass += " selected";
             if (isCorrectOption) optionClass += " correct";
             if (isIncorrectSelected) optionClass += " incorrect";
@@ -265,72 +512,83 @@ const QuizComponent: React.FC<QuizComponentProps> = ({ questions, title }) => {
                   disabled={showJustification}
                 />
                 <label htmlFor={`option-${index}`} className="option-label">
-                  <div className="option-indicator"></div>
+                  <div className="option-indicator">
+                    {isCorrectOption && showJustification && '✓'}
+                    {isIncorrectSelected && '✗'}
+                  </div>
                   <div className="option-text">{option}</div>
                 </label>
               </div>
             );
           })}
         </div>
+
+        {/* Hints Section */}
+        {currentQuestion.hints && currentQuestion.hints.length > 0 && !showJustification && (
+          <div className="hints-section">
+            <button 
+              className="hints-toggle"
+              onClick={() => setShowHints(!showHints)}
+            >
+              💡 {showHints ? 'Ocultar' : 'Mostrar'} Dicas
+            </button>
+            {showHints && (
+              <div className="hints-container">
+                <ul className="hints-list">
+                  {currentQuestion.hints.map((hint, index) => (
+                    <li key={index}>{hint}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Feedback */}
+      {/* Enhanced Feedback */}
       {showJustification && (
-        <div className={`feedback-card ${isCorrect ? 'correct' : 'incorrect'}`}>
+        <div className={`feedback-card enhanced ${isCorrect ? 'correct' : 'incorrect'}`}>
           <div className="feedback-header">
             <div className="feedback-icon">
-              {isCorrect ? '✓' : '✗'}
+              {isCorrect ? '🎉' : '📚'}
             </div>
-            <h3>{isCorrect ? 'Correto!' : 'Incorreto'}</h3>
+            <div>
+              <h3>{isCorrect ? 'Resposta Correta!' : 'Resposta Incorreta'}</h3>
+              {currentQuestion.points && (
+                <div className="points-earned">
+                  {isCorrect ? `+${currentQuestion.points} pontos` : '0 pontos'}
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="justification">
-            <h4>💡 Explicação:</h4>
+            <h4>� Explicação:</h4>
             <div className="justification-text">
               {currentQuestion.justification}
             </div>
+            
+            {currentQuestion.explanation && (
+              <div className="additional-explanation">
+                <h4>� Detalhes Adicionais:</h4>
+                <div className="explanation-text">
+                  {currentQuestion.explanation}
+                </div>
+              </div>
+            )}
           </div>
           
-          {currentQuestion.referenceLinks && currentQuestion.referenceLinks.length > 0 && (
-            <div className="references-section">
-              <h4>🔗 Links de Referência:</h4>
-              <ul className="reference-list">
-                {currentQuestion.referenceLinks.map((link, index) => (
-                  <li key={index}>
-                    <a href={link} target="_blank" rel="noopener noreferrer">
-                      Referência {index + 1}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {renderReferenceLinks(currentQuestion.referenceLinks)}
+          {renderVideos(currentQuestion.videos)}
 
-          {currentQuestion.screenshots && currentQuestion.screenshots.length > 0 && (
-            <div className="screenshots-container">
-              <h2>📸 Screenshots</h2>
-              <div>
-                {currentQuestion.screenshots.map((screenshot, index) => (
-                  <Image
-                    key={index}
-                    src={screenshot}
-                    alt={`Screenshot ${index + 1}`}
-                    width={600}
-                    height={400}
-                    className="screenshot"
-                  />
+          {currentQuestion.tags && currentQuestion.tags.length > 0 && (
+            <div className="tags-section">
+              <h4>�️ Tags:</h4>
+              <div className="tags-container">
+                {currentQuestion.tags.map((tag, index) => (
+                  <span key={index} className="tag">{tag}</span>
                 ))}
               </div>
-            </div>
-          )}
-
-          {currentQuestion.videos && currentQuestion.videos.length > 0 && (
-            <div className="video-container mt-3">
-              <h2>🎥 Vídeo Explicativo</h2>
-              <video controls className="w-100" style={{ borderRadius: '10px' }}>
-                <source src={currentQuestion.videos[0]} type="video/mp4" />
-                Seu navegador não suporta o elemento de vídeo.
-              </video>
             </div>
           )}
         </div>
