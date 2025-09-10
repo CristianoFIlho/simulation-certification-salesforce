@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ApiQuestion, QuizSet, UserProgress, QuizResults } from '@/services/api';
+import { ApiQuestion, QuizSet, UserProgress, QuizResults, apiService } from '@/services/api';
 import { mockApiService } from '@/services/mockApi';
 
 export interface UseQuizOptions {
@@ -25,8 +25,9 @@ export const useQuiz = (quizSetId: string, options: UseQuizOptions = {}) => {
       try {
         setLoading(true);
         
-        // Use mock API for now (replace with apiService when backend is ready)
-        const api = mockApiService;
+        // Switch between mock API and real API
+        const USE_REAL_API = true; // Change to false to use mock data
+        const api = USE_REAL_API ? apiService : mockApiService;
         
         // Load quiz set info
         const quizSetData = await api.getQuizSet(quizSetId);
@@ -63,7 +64,9 @@ export const useQuiz = (quizSetId: string, options: UseQuizOptions = {}) => {
 
     const saveProgress = async () => {
       try {
-        await mockApiService.saveProgress({
+        const USE_REAL_API = true; // Change to false to use mock data
+        const api = USE_REAL_API ? apiService : mockApiService;
+        await api.saveProgress({
           quizSetId,
           currentQuestion: currentQuestionIndex,
           answers,
@@ -119,7 +122,9 @@ export const useQuiz = (quizSetId: string, options: UseQuizOptions = {}) => {
   const submitQuiz = useCallback(async (): Promise<QuizResults> => {
     try {
       setLoading(true);
-      const results = await mockApiService.submitQuiz(quizSetId, answers);
+      const USE_REAL_API = true; // Change to false to use mock data
+      const api = USE_REAL_API ? apiService : mockApiService;
+      const results = await api.submitQuiz(quizSetId, answers);
       setQuizCompleted(true);
       return results;
     } catch (err) {
