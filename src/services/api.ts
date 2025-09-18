@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export interface ReferenceLink {
   title: string;
@@ -114,11 +114,35 @@ class ApiService {
 
   // Quiz Sets
   async getQuizSets(): Promise<QuizSet[]> {
-    return this.fetchWithAuth('/quiz-sets');
+    const response = await this.fetchWithAuth('/quiz-sets');
+    return response.map((quiz: any) => ({
+      id: quiz.id.toString(),
+      title: quiz.title,
+      description: quiz.description,
+      category: quiz.category,
+      totalQuestions: quiz.questions?.length || 0,
+      estimatedTime: quiz.estimated_time,
+      difficulty: quiz.difficulty,
+      isActive: true,
+      createdAt: quiz.created_at,
+      updatedAt: quiz.updated_at,
+    }));
   }
 
   async getQuizSet(id: string): Promise<QuizSet> {
-    return this.fetchWithAuth(`/quiz-sets/${id}`);
+    const quiz = await this.fetchWithAuth(`/quiz-sets/${id}`);
+    return {
+      id: quiz.id.toString(),
+      title: quiz.title,
+      description: quiz.description,
+      category: quiz.category,
+      totalQuestions: quiz.questions?.length || 0,
+      estimatedTime: quiz.estimated_time,
+      difficulty: quiz.difficulty,
+      isActive: true,
+      createdAt: quiz.created_at,
+      updatedAt: quiz.updated_at,
+    };
   }
 
   // Questions
@@ -127,17 +151,35 @@ class ApiService {
     limit?: number;
     difficulty?: string;
   }): Promise<ApiQuestion[]> {
-    const params = new URLSearchParams();
-    if (options?.shuffle) params.append('shuffle', 'true');
-    if (options?.limit) params.append('limit', options.limit.toString());
-    if (options?.difficulty) params.append('difficulty', options.difficulty);
+    const questions = await this.fetchWithAuth(`/quiz-sets/${quizSetId}/questions`);
     
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.fetchWithAuth(`/quiz-sets/${quizSetId}/questions${query}`);
+    return questions.map((q: any) => ({
+      id: q.id.toString(),
+      question: q.question,
+      options: q.options,
+      correctAnswer: q.correct_answer,
+      type: q.type as "radio" | "checkbox",
+      justification: q.justification,
+      referenceLinks: [], // Not implemented in API yet
+      screenshots: [], // Not implemented in API yet
+      videos: [], // Not implemented in API yet
+      difficulty: q.difficulty,
+      category: q.category,
+      tags: [],
+      timeLimit: undefined,
+      points: undefined,
+      explanation: q.justification,
+      hints: [],
+    }));
   }
 
   async getQuestion(quizSetId: string, questionId: string): Promise<ApiQuestion> {
-    return this.fetchWithAuth(`/quiz-sets/${quizSetId}/questions/${questionId}`);
+    const questions = await this.getQuestions(quizSetId);
+    const question = questions.find(q => q.id === questionId);
+    if (!question) {
+      throw new Error('Question not found');
+    }
+    return question;
   }
 
   // User Progress
@@ -157,61 +199,144 @@ class ApiService {
   }
 
   async submitQuiz(quizSetId: string, answers: Record<string, number | number[]>): Promise<QuizResults> {
-    return this.fetchWithAuth(`/quiz-sets/${quizSetId}/submit`, {
+    const answersArray = Object.entries(answers).map(([questionId, answer]) => ({
+      question_id: parseInt(questionId),
+      answer: Array.isArray(answer) ? answer[0] : answer,
+    }));
+
+    const result = await this.fetchWithAuth('/quiz-sets/submit', {
       method: 'POST',
-      body: JSON.stringify({ answers }),
+      body: JSON.stringify({
+        quiz_set_id: parseInt(quizSetId),
+        answers: answersArray,
+      }),
     });
+
+    return {
+      score: result.score,
+      correctAnswers: result.correct_answers,
+      totalQuestions: result.total_questions,
+      timeSpent: result.time_taken,
+      detailedResults: result.details.map((detail: any) => ({
+        questionId: detail.question_id.toString(),
+        correct: detail.is_correct,
+        userAnswer: detail.user_answer,
+        correctAnswer: detail.correct_answer,
+      })),
+    };
   }
 
   // Analytics
   async getQuizAnalytics(quizSetId: string): Promise<QuizAnalytics> {
-    return this.fetchWithAuth(`/quiz-sets/${quizSetId}/analytics`);
+    const analytics = await this.fetchWithAuth(`/analytics/quiz-stats/${quizSetId}`);
+    return {
+      totalAttempts: analytics.total_attempts,
+      averageScore: analytics.average_score,
+      completionRate: analytics.completion_rate,
+      questionStats: [], // Not implemented in API yet
+    };
   }
 
   async getUserStats(): Promise<UserStats> {
-    return this.fetchWithAuth('/users/stats');
+    const stats = await this.fetchWithAuth('/analytics/user-stats');
+    return {
+      totalQuizzes: stats.total_quizzes_taken,
+      completedQuizzes: stats.total_quizzes_taken,
+      averageScore: stats.average_score,
+      totalTimeSpent: stats.total_time_spent,
+      strongCategories: Object.keys(stats.quizzes_by_category).filter(
+        category => stats.quizzes_by_category[category] > 0
+      ),
+      weakCategories: [], // Not implemented in API yet
+    };
   }
 
   // Authentication
   async login(email: string, password: string): Promise<{
-    token: string;
+    access_token: string;
+    token_type: string;
     user: {
-      id: string;
+      id: number;
       name: string;
       email: string;
       role: string;
     };
   }> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const formData = new FormData();
+    formData.append('username', email);
+    formData.append('password', password);
+
+    const response = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        username: email,
+        password: password,
+      }),
     });
 
     if (!response.ok) {
-      throw new Error('Login failed');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Login failed');
     }
 
     const data = await response.json();
-    localStorage.setItem('auth-token', data.token);
-    return data;
+    localStorage.setItem('auth-token', data.access_token);
+    
+    // Get user info
+    const userResponse = await this.fetchWithAuth('/me');
+    
+    return {
+      access_token: data.access_token,
+      token_type: data.token_type,
+      user: userResponse,
+    };
   }
 
   async register(userData: {
     name: string;
     email: string;
     password: string;
-  }): Promise<void> {
-    await fetch(`${API_BASE_URL}/auth/register`, {
+    role?: string;
+  }): Promise<{
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    created_at: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
+      body: JSON.stringify({
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role || 'user',
+      }),
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Registration failed');
+    }
+
+    return response.json();
   }
 
   async logout(): Promise<void> {
     localStorage.removeItem('auth-token');
-    await this.fetchWithAuth('/auth/logout', { method: 'POST' });
+  }
+
+  async getCurrentUser(): Promise<{
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    created_at: string;
+    updated_at: string;
+  }> {
+    return this.fetchWithAuth('/me');
   }
 }
 
