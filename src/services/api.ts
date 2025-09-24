@@ -115,7 +115,16 @@ class ApiService {
   // Quiz Sets
   async getQuizSets(): Promise<QuizSet[]> {
     const response = await this.fetchWithAuth('/quiz-sets');
-    return response.map((quiz: any) => ({
+    return response.map((quiz: {
+      id: number;
+      title: string;
+      description: string;
+      category: string;
+      questions?: unknown[];
+      estimated_time: number;
+      difficulty: string;
+      is_active: boolean;
+    }) => ({
       id: quiz.id.toString(),
       title: quiz.title,
       description: quiz.description,
@@ -153,7 +162,17 @@ class ApiService {
   }): Promise<ApiQuestion[]> {
     const questions = await this.fetchWithAuth(`/quiz-sets/${quizSetId}/questions`);
     
-    return questions.map((q: any) => ({
+    return questions.map((q: {
+      id: number;
+      question: string;
+      options: string[];
+      correct_answer: number | number[];
+      type: string;
+      justification: string;
+      difficulty?: string;
+      category?: string;
+      points?: number;
+    }) => ({
       id: q.id.toString(),
       question: q.question,
       options: q.options,
@@ -217,7 +236,12 @@ class ApiService {
       correctAnswers: result.correct_answers,
       totalQuestions: result.total_questions,
       timeSpent: result.time_taken,
-      detailedResults: result.details.map((detail: any) => ({
+      detailedResults: result.details.map((detail: {
+        question_id: number;
+        is_correct: boolean;
+        user_answer: number;
+        correct_answer: number;
+      }) => ({
         questionId: detail.question_id.toString(),
         correct: detail.is_correct,
         userAnswer: detail.user_answer,

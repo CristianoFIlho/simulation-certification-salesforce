@@ -13,7 +13,11 @@ const QuestionAdmin: React.FC<QuestionAdminProps> = ({ quizSetId }) => {
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    totalQuestions: number;
+    categories: string[];
+    difficulties: Record<string, number>;
+  } | null>(null);
   
   const cache = useQuestionCache();
 
