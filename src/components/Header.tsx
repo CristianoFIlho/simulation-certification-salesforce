@@ -68,6 +68,25 @@ const Header = () => {
               🏠 Home
             </Link>
 
+            <Link 
+              href="/admin" 
+              className="nav-link admin-link"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '20px',
+                textDecoration: 'none',
+                fontWeight: '600',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              ⚙️ Admin
+            </Link>
+
             {/* Administrator Dropdown */}
             <div className="dropdown">
               <button

@@ -29,6 +29,41 @@ body {
   color: var(--foreground);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ===== DARK MODE STYLES ===== */
+[data-theme="dark"] {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #404040;
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --text-tertiary: #b0b0b0;
+  --border-primary: #555555;
+  --border-secondary: #404040;
+  --accent-blue: #007BFF;
+  --accent-green: #28A745;
+  --accent-orange: #FD7E14;
+  --accent-yellow: #FFC107;
+  --accent-cyan: #17A2B8;
+}
+
+[data-theme="dark"] body {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  color: var(--text-primary);
+}
+
+/* Garantir que o botão dark mode seja sempre visível */
+.dark-mode-toggle {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: flex !important;
+  pointer-events: auto !important;
 }
 
 /* Container principal */
@@ -1147,21 +1182,92 @@ body {
 }
 
 .justification {
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 15px 0;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 25px;
+  margin: 20px 0;
+  border: 3px solid #007BFF;
+  box-shadow: 0 4px 16px rgba(0, 123, 255, 0.15);
 }
 
 .justification h4 {
-  color: #495057;
-  margin-bottom: 15px;
-  font-size: 1.1em;
+  color: #007BFF;
+  margin-bottom: 20px;
+  font-size: 1.3em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .justification-text {
-  line-height: 1.6;
-  color: #6c757d;
+  line-height: 1.8;
+  color: #000000;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+/* Dark mode styles for globals.css elements */
+[data-theme="dark"] .justification {
+  background: var(--bg-secondary);
+  border-color: var(--accent-blue);
+}
+
+[data-theme="dark"] .justification h4 {
+  color: var(--accent-blue);
+}
+
+[data-theme="dark"] .justification-text {
+  color: var(--text-primary);
+}
+
+/* ===== HOME PAGE DARK MODE STYLES ===== */
+[data-theme="dark"] .certification-card {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .certification-card:hover {
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .certification-card h3 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .certification-card p {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .certification-card strong {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .certification-card ul li {
+  color: var(--text-primary) !important;
+  border-bottom-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .hero-section {
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+}
+
+[data-theme="dark"] .features-section {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .features-section h2 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .features-section h4 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .features-section p {
+  color: var(--text-secondary) !important;
 }
 
 /* References section */
@@ -1352,6 +1458,25 @@ body {
   background: #f8f9fa;
   color: #667eea;
   text-decoration: none;
+}
+
+/* Homepage Styles */
+.hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 60px 40px;
+  text-align: center;
+  color: white;
+  margin-bottom: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.features-section {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  margin-bottom: 50px;
 }
 
 /* Homepage Card Styles */

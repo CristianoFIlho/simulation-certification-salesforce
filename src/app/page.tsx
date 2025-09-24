@@ -10,15 +10,7 @@ export default function Home() {
       <Header />
       <div className="quiz-container" style={{ paddingTop: '40px' }}>
         {/* Hero Section */}
-        <div className="hero-section" style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          borderRadius: '20px',
-          padding: '60px 40px',
-          textAlign: 'center',
-          color: 'white',
-          marginBottom: '40px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-        }}>
+        <div className="hero-section">
           <h1 style={{ 
             fontSize: '3.5em', 
             fontWeight: 'bold', 
@@ -210,13 +202,7 @@ export default function Home() {
         </div>
 
         {/* Features Section */}
-        <div style={{
-          background: 'white',
-          borderRadius: '20px',
-          padding: '40px',
-          boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
-          marginBottom: '50px'
-        }}>
+        <div className="features-section">
           <h2 style={{ 
             textAlign: 'center', 
             color: '#495057', 
